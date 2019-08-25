@@ -33,8 +33,4 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/olefri
 
 ## License
 
-The gem is available as open source under the terms of the [GPL V2 License](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html).
-
-## Why the H... did you choose GPL V2 as the license?
-
-I really, really hate the GPL license, but I need to base this project on other GPL projects.
+The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).

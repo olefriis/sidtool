@@ -1,5 +1,6 @@
-require "bundler/setup"
-require "sidtool"
+require 'bundler/setup'
+require 'sidtool'
+require 'pry'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
