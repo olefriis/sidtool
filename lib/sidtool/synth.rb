@@ -22,7 +22,7 @@ module Sidtool
       length_of_attack_decay_sustain = (STATE.current_frame - @start_frame) / FRAMES_PER_SECOND
       if length_of_attack_decay_sustain < @attack
         @attack = length_of_attack_decay_sustain
-        @sustain_length = 0
+        @decay, @sustain_length = 0, 0
       elsif length_of_attack_decay_sustain < @attack + @decay
         @decay = length_of_attack_decay_sustain - @attack
         @sustain_length = 0
