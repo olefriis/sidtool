@@ -1,6 +1,5 @@
 module Sidtool
   class Synth
-    attr_writer :frequency
     attr_writer :waveform
     attr_writer :attack
     attr_writer :decay
@@ -8,6 +7,15 @@ module Sidtool
 
     def initialize(start_frame)
       @start_frame = start_frame
+      @controls = []
+    end
+
+    def frequency=(frequency)
+      if @frequency
+        previous_midi, current_midi = sid_frequency_to_nearest_midi(@frequency), sid_frequency_to_nearest_midi(frequency)
+        @controls << [STATE.current_frame, current_midi] if previous_midi != current_midi
+      end
+      @frequency = frequency
     end
 
     def release!
@@ -30,7 +38,7 @@ module Sidtool
 
     def to_a
       tone = sid_frequency_to_nearest_midi(@frequency)
-      [@start_frame, tone, @waveform, @attack, @decay, @sustain_length, @release]
+      [@start_frame, tone, @waveform, @attack.round(3), @decay.round(3), @sustain_length, @release.round(3), @controls]
     end
 
     private

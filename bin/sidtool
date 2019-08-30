@@ -1,0 +1,49 @@
+#!/usr/bin/env ruby
+require 'sidtool'
+require 'mos6510'
+
+raise "Wrong number of input parameters. Expected 1, got #{ARGV.length}" unless ARGV.length == 1
+input_file = ARGV[0]
+
+sid_file = Sidtool::FileReader.read(input_file)
+STDERR.puts "Read #{sid_file.format} version #{sid_file.version} file."
+STDERR.puts "Name: #{sid_file.name}"
+STDERR.puts "Author: #{sid_file.author}"
+STDERR.puts "Released: #{sid_file.released}"
+STDERR.puts "Songs: #{sid_file.songs} (start song: #{sid_file.start_song})"
+
+load_address = sid_file.data[0] + (sid_file.data[1] << 8)
+
+sid = Sidtool::Sid.new
+cpu = Mos6510::Cpu.new(sid: sid)
+
+cpu.load(sid_file.data[2..-1], from: load_address)
+cpu.start
+
+play_address = sid_file.play_address
+if play_address == 0
+  cpu.jsr sid_file.init_address
+  play_address = (cpu.peek(0x0315) << 8) + cpu.peek(0x0314)
+  STDERR.puts "New play address #{play_address}"
+end
+
+song = sid_file.start_song
+cpu.jsr sid_file.init_address, song - 1
+frames = 1500
+
+frames.times do
+  cpu.jsr play_address
+  sid.finish_frame
+  Sidtool::STATE.current_frame += 1
+end
+
+sid.stop!
+
+STDERR.puts("#{frames} frames")
+
+puts '::SYNTHS = ['
+Sidtool::STATE.synths
+    .each do |synth|
+  puts synth.to_a.inspect + ','
+end
+puts ']'

@@ -52,7 +52,7 @@ module Sidtool
     def waveform
       return :tri if @control_register & 16 != 0
       return :saw if @control_register & 32 != 0
-      return :dpulse if @control_register & 64 != 0
+      return :pulse if @control_register & 64 != 0
       return :noise if @control_register & 128 != 0
       STDERR.puts "Unknown waveform: #{@control_register}"
       return :noise

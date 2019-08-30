@@ -24,8 +24,7 @@ Gem::Specification.new do |spec|
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|
     f.match(%r{^(test|spec|features)/})
   end
-  spec.bindir        = 'exe'
-  spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
+  spec.executables   = 'sidtool'
   spec.require_paths = ['lib']
 
   spec.add_dependency 'mos6510', '~> 0.1.0'
