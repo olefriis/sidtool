@@ -1,49 +1,82 @@
 #!/usr/bin/env ruby
 require 'sidtool'
 require 'mos6510'
+require 'optparse'
 
-raise "Wrong number of input parameters. Expected 1, got #{ARGV.length}" unless ARGV.length == 1
-input_file = ARGV[0]
+params = {}
+OptionParser.new do |parser|
+  parser.banner = 'Usage: sidtool [options] <intputfile.sid>'
 
+  parser.on('-i', '--info', 'Show file information')
+  parser.on('-o', '--out FILENAME', 'Output file (Ruby array)')
+  parser.on('-s', '--song NUMBER', Integer, 'Song number to process')
+  parser.on('-f', '--frames NUMBER', Integer, 'Number of frames to process')
+  parser.on_tail('-h', '--help', 'Show this message') do
+    puts parser
+    exit
+  end
+  parser.on_tail('--version', 'Show version') do
+    puts Sidtool::Version
+    exit
+  end
+end.parse!(into: params)
+
+raise 'Missing input file' if ARGV.empty?
+raise 'Too many arguments' if ARGV.length > 1
+input_file = ARGV.pop
 sid_file = Sidtool::FileReader.read(input_file)
-STDERR.puts "Read #{sid_file.format} version #{sid_file.version} file."
-STDERR.puts "Name: #{sid_file.name}"
-STDERR.puts "Author: #{sid_file.author}"
-STDERR.puts "Released: #{sid_file.released}"
-STDERR.puts "Songs: #{sid_file.songs} (start song: #{sid_file.start_song})"
 
-load_address = sid_file.data[0] + (sid_file.data[1] << 8)
+output_file = params[:out]
+show_info = !!params[:info]
+raise 'Either provide -i or -o, or I have nothing to do!' unless output_file || show_info
 
-sid = Sidtool::Sid.new
-cpu = Mos6510::Cpu.new(sid: sid)
+song = params[:song] || sid_file.start_song
+raise 'Song must be at least 1' if song < 1
+raise "File only has #{sid_file.songs} songs" if song > sid_file.songs
 
-cpu.load(sid_file.data[2..-1], from: load_address)
-cpu.start
+frames = params[:frames] || 1500
 
-play_address = sid_file.play_address
-if play_address == 0
-  cpu.jsr sid_file.init_address
-  play_address = (cpu.peek(0x0315) << 8) + cpu.peek(0x0314)
-  STDERR.puts "New play address #{play_address}"
+if show_info
+  puts "Read #{sid_file.format} version #{sid_file.version} file."
+  puts "Name: #{sid_file.name}"
+  puts "Author: #{sid_file.author}"
+  puts "Released: #{sid_file.released}"
+  puts "Songs: #{sid_file.songs} (start song: #{sid_file.start_song})"
 end
 
-song = sid_file.start_song
-cpu.jsr sid_file.init_address, song - 1
-frames = 1500
+if output_file
+  load_address = sid_file.data[0] + (sid_file.data[1] << 8)
 
-frames.times do
-  cpu.jsr play_address
-  sid.finish_frame
-  Sidtool::STATE.current_frame += 1
+  sid = Sidtool::Sid.new
+  cpu = Mos6510::Cpu.new(sid: sid)
+
+  cpu.load(sid_file.data[2..-1], from: load_address)
+  cpu.start
+
+  play_address = sid_file.play_address
+  if play_address == 0
+    cpu.jsr sid_file.init_address
+    play_address = (cpu.peek(0x0315) << 8) + cpu.peek(0x0314)
+    STDERR.puts "New play address #{play_address}"
+  end
+
+  cpu.jsr sid_file.init_address, song - 1
+
+  frames.times do
+    cpu.jsr play_address
+    sid.finish_frame
+    Sidtool::STATE.current_frame += 1
+  end
+
+  sid.stop!
+
+  STDERR.puts("Processed #{frames} frames")
+
+  File.open(output_file, 'w') do |file|
+    file.puts '::SYNTHS = ['
+    Sidtool::STATE.synths.each do |synth|
+      file.puts synth.to_a.inspect + ','
+    end
+    file.puts ']'
+  end
 end
-
-sid.stop!
-
-STDERR.puts("#{frames} frames")
-
-puts '::SYNTHS = ['
-Sidtool::STATE.synths
-    .each do |synth|
-  puts synth.to_a.inspect + ','
-end
-puts ']'
