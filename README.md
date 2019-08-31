@@ -20,6 +20,19 @@ used to play back the songs. You know, almost as notes.
 Currently the only output format is a Ruby file which defines a list of synths to play at certain
 points in time. This can be used to play back the music in [Sonic Pi](https://sonic-pi.net).
 
+## Limitations
+
+Only a subset of the so-called `PSID` format is supported (a few `.sid` files use the `RSID` format
+which requires a more complete Commodore 64 environment to run), and maybe not all shortcomings of
+the support is handled well.
+
+Only PAL (50 frames per second) is supported. No CIA timers or other fanciness is supported.
+
+The conversion runs a specified number of frames (default is 1500 - this can be changed on the
+command line). Ideally it should be able to run until the song finishes.
+
+For these and other limitations, please consult [the issues](https://github.com/olefriis/sidtool/issues).
+
 ## Installation
 
     gem install sidtool
