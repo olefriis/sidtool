@@ -19,6 +19,7 @@ module Sidtool
     end
 
     def release!
+      @released_at = STATE.current_frame
       length_of_attack_decay_sustain = (STATE.current_frame - @start_frame) / FRAMES_PER_SECOND
       if length_of_attack_decay_sustain < @attack
         @attack = length_of_attack_decay_sustain
@@ -31,14 +32,22 @@ module Sidtool
       end
     end
 
+    def released?
+      !!@released_at
+    end
+
     def stop!
-      # TODO: Should also cut off any remaining release
-      release!
+      if released?
+        @release = [@release, (STATE.current_frame - @released_at) / FRAMES_PER_SECOND].min
+      else
+        @release = 0
+        release!
+      end
     end
 
     def to_a
       tone = sid_frequency_to_nearest_midi(@frequency)
-      [@start_frame, tone, @waveform, @attack.round(3), @decay.round(3), @sustain_length, @release.round(3), @controls]
+      [@start_frame, tone, @waveform, @attack.round(3), @decay.round(3), @sustain_length.round(3), @release.round(3), @controls]
     end
 
     private

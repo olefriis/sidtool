@@ -18,8 +18,13 @@ module Sidtool
 
     def finish_frame
       if gate
+        if @synth&.released?
+          @synth.stop!
+          @synth = nil
+        end
+
         if frequency > 0
-          unless @synth
+          if !@synth
             @synth = Synth.new(STATE.current_frame)
             STATE.synths << @synth
           end
@@ -31,7 +36,6 @@ module Sidtool
         end
       else
         @synth&.release!
-        @synth = nil
       end
     end
 
