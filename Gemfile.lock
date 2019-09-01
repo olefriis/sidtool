@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sidtool (0.0.1)
+    sidtool (0.0.2)
       mos6510 (~> 0.1.0)
 
 GEM
