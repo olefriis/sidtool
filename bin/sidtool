@@ -3,14 +3,16 @@ require 'sidtool'
 require 'mos6510'
 require 'optparse'
 
+DEFAULT_FRAMES_TO_PROCESS = 15000
+
 params = {}
 OptionParser.new do |parser|
   parser.banner = 'Usage: sidtool [options] <intputfile.sid>'
 
   parser.on('-i', '--info', 'Show file information')
   parser.on('-o', '--out FILENAME', 'Output file (Ruby array)')
-  parser.on('-s', '--song NUMBER', Integer, 'Song number to process')
-  parser.on('-f', '--frames NUMBER', Integer, 'Number of frames to process')
+  parser.on('-s', '--song NUMBER', Integer, 'Song number to process (defaults to the start song in the file)')
+  parser.on('-f', '--frames NUMBER', Integer, "Number of frames to process (default #{DEFAULT_FRAMES_TO_PROCESS})")
   parser.on_tail('-h', '--help', 'Show this message') do
     puts parser
     exit
@@ -34,7 +36,7 @@ song = params[:song] || sid_file.start_song
 raise 'Song must be at least 1' if song < 1
 raise "File only has #{sid_file.songs} songs" if song > sid_file.songs
 
-frames = params[:frames] || 1500
+frames = params[:frames] || DEFAULT_FRAMES_TO_PROCESS
 
 if show_info
   puts "Read #{sid_file.format} version #{sid_file.version} file."
