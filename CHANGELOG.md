@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.2 (ongoing)
+## 0.0.2
 * Process 15000 frames (10 minutes) instead of 1500 (half a minute) by default.
 * Only release a synth once. This fixes various sound effects that would just end up with a
   permanently released synth. It will probably make "normal" tunes sound a bit crisper too.
