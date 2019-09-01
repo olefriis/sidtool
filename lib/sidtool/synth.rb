@@ -19,6 +19,8 @@ module Sidtool
     end
 
     def release!
+      return if released?
+
       @released_at = STATE.current_frame
       length_of_attack_decay_sustain = (STATE.current_frame - @start_frame) / FRAMES_PER_SECOND
       if length_of_attack_decay_sustain < @attack
