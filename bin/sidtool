@@ -4,6 +4,10 @@ require 'mos6510'
 require 'optparse'
 
 DEFAULT_FRAMES_TO_PROCESS = 15000
+EXPORTERS = {
+  'ruby' => Sidtool::RubyFileWriter,
+  'midi' => Sidtool::MidiFileWriter
+}
 
 params = {}
 OptionParser.new do |parser|
@@ -32,6 +36,10 @@ sid_file = Sidtool::FileReader.read(input_file)
 output_file = params[:out]
 show_info = !!params[:info]
 raise 'Either provide -i or -o, or I have nothing to do!' unless output_file || show_info
+
+format = params[:format] || EXPORTERS.keys.first
+exporter_class = EXPORTERS[format]
+raise "Invalid format: #{format}. Valid formats: #{EXPORTERS.keys.join(', ')}" unless exporter_class
 
 song = params[:song] || sid_file.start_song
 raise 'Song must be at least 1' if song < 1
@@ -75,6 +83,5 @@ if output_file
 
   STDERR.puts("Processed #{frames} frames")
 
-  #Sidtool::RubyFileWriter.new(sid.synths).write_to(output_file)
-  Sidtool::MidiFileWriter.new(sid.synths).write_to(output_file)
+  exporter_class.new(sid.synths).write_to(output_file)
 end
