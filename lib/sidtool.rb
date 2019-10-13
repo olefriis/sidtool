@@ -2,6 +2,8 @@ require 'sidtool/version'
 
 module Sidtool
   require 'sidtool/file_reader'
+  require 'sidtool/ruby_file_writer'
+  require 'sidtool/midi_file_writer'
   require 'sidtool/synth'
   require 'sidtool/voice'
   require 'sidtool/sid'

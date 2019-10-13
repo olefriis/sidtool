@@ -4,6 +4,7 @@ module Sidtool
     attr_writer :attack
     attr_writer :decay
     attr_writer :release
+    attr_reader :start_frame
 
     def initialize(start_frame)
       @start_frame = start_frame
@@ -48,8 +49,11 @@ module Sidtool
     end
 
     def to_a
-      tone = sid_frequency_to_nearest_midi(@frequency)
       [@start_frame, tone, @waveform, @attack.round(3), @decay.round(3), @sustain_length.round(3), @release.round(3), @controls]
+    end
+
+    def tone
+      sid_frequency_to_nearest_midi(@frequency)
     end
 
     private

@@ -10,6 +10,7 @@ OptionParser.new do |parser|
   parser.banner = 'Usage: sidtool [options] <intputfile.sid>'
 
   parser.on('-i', '--info', 'Show file information')
+  parser.on('--format FORMAT', 'Output format, "ruby" (default) or "midi"')
   parser.on('-o', '--out FILENAME', 'Output file (Ruby array)')
   parser.on('-s', '--song NUMBER', Integer, 'Song number to process (defaults to the start song in the file)')
   parser.on('-f', '--frames NUMBER', Integer, "Number of frames to process (default #{DEFAULT_FRAMES_TO_PROCESS})")
@@ -74,11 +75,6 @@ if output_file
 
   STDERR.puts("Processed #{frames} frames")
 
-  File.open(output_file, 'w') do |file|
-    file.puts '::SYNTHS = ['
-    Sidtool::STATE.synths.each do |synth|
-      file.puts synth.to_a.inspect + ','
-    end
-    file.puts ']'
-  end
+  #Sidtool::RubyFileWriter.new(sid.synths).write_to(output_file)
+  Sidtool::MidiFileWriter.new(sid.synths).write_to(output_file)
 end
