@@ -19,9 +19,10 @@ module Sidtool
           synths_for_voice.each do |synth|
             diff = synth.start_frame - (previous_synth&.start_frame || 0)
             track << variable_length_quantity(diff)
-            #if previous_synth
-            #  track << note_off(voice_number, previous_synth.tone)
-            #end
+            if previous_synth
+              track << note_off(voice_number, previous_synth.tone)
+              track << variable_length_quantity(0)
+            end
             track << note_on(voice_number, synth.tone)
             previous_synth = synth
           end
