@@ -1,8 +1,5 @@
 module Sidtool
   class MidiFileWriter
-    # Currently we only support PAL music (50 frames per second)
-    FRAMES_PER_SECOND = 50
-
     DeltaTime = Struct.new(:time) do
       def bytes
         quantity = time
