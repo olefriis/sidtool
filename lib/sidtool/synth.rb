@@ -1,10 +1,11 @@
 module Sidtool
   class Synth
-    attr_writer :waveform
-    attr_writer :attack
-    attr_writer :decay
-    attr_writer :release
     attr_reader :start_frame
+    attr_accessor :waveform
+    attr_accessor :attack
+    attr_accessor :decay
+    attr_reader :sustain_length
+    attr_accessor :release
 
     def initialize(start_frame)
       @start_frame = start_frame
