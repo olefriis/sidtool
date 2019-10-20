@@ -83,5 +83,5 @@ if output_file
 
   STDERR.puts("Processed #{frames} frames")
 
-  exporter_class.new(sid.synths).write_to(output_file)
+  exporter_class.new(sid.synths_for_voices).write_to(output_file)
 end

@@ -90,12 +90,12 @@ module Sidtool
       end
     end
 
-    def initialize(synths)
-      @synths = synths
+    def initialize(synths_for_voices)
+      @synths_for_voices = synths_for_voices
     end
 
     def write_to(path)
-      tracks = @synths.map { |synths_for_voice| build_track(synths_for_voice) }
+      tracks = @synths_for_voices.map { |synths| build_track(synths) }
 
       File.open(path, 'wb') do |file|
         write_header(file)

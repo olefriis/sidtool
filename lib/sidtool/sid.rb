@@ -44,8 +44,8 @@ module Sidtool
       @voices.each(&:stop!)
     end
 
-    def synths
-      [@voices[0].synths, @voices[1].synths, @voices[2].synths]
+    def synths_for_voices
+      @voices.map(&:synths)
     end
   end
 end
