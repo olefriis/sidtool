@@ -6,6 +6,7 @@ module Sidtool
     attr_accessor :decay
     attr_reader :sustain_length
     attr_accessor :release
+    attr_reader :controls
 
     def initialize(start_frame)
       @start_frame = start_frame

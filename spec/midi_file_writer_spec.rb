@@ -2,25 +2,18 @@ module Sidtool
   RSpec.describe MidiFileWriter do
     # Trying to make frame specification in seconds a bit more readable...
     ONE_FRAME = 0.02
-    TWO_FRAMES = 0.04
-    THREE_FRAMES = 0.06
-    FOUR_FRAMES = 0.08
     let(:subject) { MidiFileWriter.new(synths) }
 
     describe '#build_track' do
-      let(:track) { subject.build_track }
+      let(:track) { subject.build_track(synths) }
 
-      TestSynth = Struct.new(:start_frame, :tone, :waveform, :attack, :decay, :sustain_length, :release)
+      TestSynth = Struct.new(:start_frame, :tone, :waveform, :attack, :decay, :sustain_length, :release, :controls)
 
-      context 'with sequential synths for just one voice' do
+      context 'with simple, sequential synths' do
         let(:synths) {
           [
-            [
-              TestSynth[50, 75, :tri, ONE_FRAME, ONE_FRAME, ONE_FRAME, ONE_FRAME],
-              TestSynth[100, 76, :tri, TWO_FRAMES, TWO_FRAMES, TWO_FRAMES, TWO_FRAMES]
-            ],
-            [],
-            []
+            TestSynth[50, 75, :tri, ONE_FRAME, ONE_FRAME, ONE_FRAME, ONE_FRAME, []],
+            TestSynth[100, 76, :tri, 2 * ONE_FRAME, 2 * ONE_FRAME, 2 * ONE_FRAME, 2 * ONE_FRAME, []]
           ]
         }
 
@@ -37,14 +30,10 @@ module Sidtool
       context 'with different waveforms' do
         let(:synths) {
           [
-            [
-              TestSynth[50, 75, :tri, ONE_FRAME, ONE_FRAME, ONE_FRAME, ONE_FRAME],
-              TestSynth[100, 76, :saw, ONE_FRAME, ONE_FRAME, ONE_FRAME, ONE_FRAME],
-              TestSynth[150, 77, :pulse, ONE_FRAME, ONE_FRAME, ONE_FRAME, ONE_FRAME],
-              TestSynth[200, 78, :noise, ONE_FRAME, ONE_FRAME, ONE_FRAME, ONE_FRAME]
-            ],
-            [],
-            []
+            TestSynth[50, 75, :tri, ONE_FRAME, ONE_FRAME, ONE_FRAME, ONE_FRAME, []],
+            TestSynth[100, 76, :saw, ONE_FRAME, ONE_FRAME, ONE_FRAME, ONE_FRAME, []],
+            TestSynth[150, 77, :pulse, ONE_FRAME, ONE_FRAME, ONE_FRAME, ONE_FRAME, []],
+            TestSynth[200, 78, :noise, ONE_FRAME, ONE_FRAME, ONE_FRAME, ONE_FRAME, []]
           ]
         }
 
@@ -62,59 +51,29 @@ module Sidtool
         end
       end
 
-      context 'with sequential synths for separate voices' do
+      context 'with controls' do
         let(:synths) {
           [
-            [
-              TestSynth[50, 75, :tri, ONE_FRAME, ONE_FRAME, ONE_FRAME, ONE_FRAME],
-              TestSynth[200, 78, :tri, TWO_FRAMES, TWO_FRAMES, TWO_FRAMES, TWO_FRAMES]
-            ],
-            [
-              TestSynth[100, 76, :tri, TWO_FRAMES, TWO_FRAMES, TWO_FRAMES, TWO_FRAMES],
-              TestSynth[250, 79, :tri, THREE_FRAMES, THREE_FRAMES, THREE_FRAMES, THREE_FRAMES]
-            ],
-            [
-              TestSynth[150, 77, :tri, THREE_FRAMES, THREE_FRAMES, THREE_FRAMES, THREE_FRAMES],
-              TestSynth[300, 80, :tri, FOUR_FRAMES, FOUR_FRAMES, FOUR_FRAMES, FOUR_FRAMES]
-            ]
+            TestSynth[50, 75, :tri, ONE_FRAME, ONE_FRAME, 20 * ONE_FRAME, ONE_FRAME, [[51, 76], [55, 80]]],
+            TestSynth[100, 76, :tri, ONE_FRAME, ONE_FRAME, 10 * ONE_FRAME, ONE_FRAME, [[105, 70]]]
           ]
         }
 
-        it 'places commands sequentially and maps to different channels' do
+        it 'converts them to sequential notes' do
           expect(track).to eq([
+            # First synth - a total of 22 frames
             MidiFileWriter::DeltaTime[50], MidiFileWriter::NoteOn[0, 75],
-            MidiFileWriter::DeltaTime[3], MidiFileWriter::NoteOff[0, 75],
-            MidiFileWriter::DeltaTime[47], MidiFileWriter::NoteOn[4, 76],
-            MidiFileWriter::DeltaTime[6], MidiFileWriter::NoteOff[4, 76],
-            MidiFileWriter::DeltaTime[44], MidiFileWriter::NoteOn[8, 77],
-            MidiFileWriter::DeltaTime[9], MidiFileWriter::NoteOff[8, 77],
-            MidiFileWriter::DeltaTime[41], MidiFileWriter::NoteOn[0, 78],
-            MidiFileWriter::DeltaTime[6], MidiFileWriter::NoteOff[0, 78],
-            MidiFileWriter::DeltaTime[44], MidiFileWriter::NoteOn[4, 79],
-            MidiFileWriter::DeltaTime[9], MidiFileWriter::NoteOff[4, 79],
-            MidiFileWriter::DeltaTime[41], MidiFileWriter::NoteOn[8, 80],
-            MidiFileWriter::DeltaTime[12], MidiFileWriter::NoteOff[8, 80],
-          ])
-        end
-      end
-
-      context 'with interleaved synths' do
-        let(:synths) {
-          [
-            [TestSynth[50, 75, :tri, ONE_FRAME, ONE_FRAME, ONE_FRAME, ONE_FRAME]],
-            [TestSynth[51, 76, :tri, TWO_FRAMES, TWO_FRAMES, TWO_FRAMES, TWO_FRAMES]],
-            [TestSynth[52, 77, :tri, THREE_FRAMES, THREE_FRAMES, THREE_FRAMES, THREE_FRAMES]]
-          ]
-        }
-
-        it 'interleaves commands' do
-          expect(track).to eq([
-            MidiFileWriter::DeltaTime[50], MidiFileWriter::NoteOn[0, 75],
-            MidiFileWriter::DeltaTime[1], MidiFileWriter::NoteOn[4, 76],
-            MidiFileWriter::DeltaTime[1], MidiFileWriter::NoteOn[8, 77],
             MidiFileWriter::DeltaTime[1], MidiFileWriter::NoteOff[0, 75],
-            MidiFileWriter::DeltaTime[4], MidiFileWriter::NoteOff[4, 76],
-            MidiFileWriter::DeltaTime[4], MidiFileWriter::NoteOff[8, 77],
+            MidiFileWriter::DeltaTime[0], MidiFileWriter::NoteOn[0, 76],
+            MidiFileWriter::DeltaTime[4], MidiFileWriter::NoteOff[0, 76],
+            MidiFileWriter::DeltaTime[0], MidiFileWriter::NoteOn[0, 80],
+            MidiFileWriter::DeltaTime[17], MidiFileWriter::NoteOff[0, 80],
+
+            # Second synth - a total of 12 frames
+            MidiFileWriter::DeltaTime[28], MidiFileWriter::NoteOn[0, 76],
+            MidiFileWriter::DeltaTime[5], MidiFileWriter::NoteOff[0, 76],
+            MidiFileWriter::DeltaTime[0], MidiFileWriter::NoteOn[0, 70],
+            MidiFileWriter::DeltaTime[7], MidiFileWriter::NoteOff[0, 70]
           ])
         end
       end

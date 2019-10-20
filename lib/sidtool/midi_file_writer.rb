@@ -15,6 +15,16 @@ module Sidtool
       end
     end
 
+    TrackName = Struct.new(:name) do
+      def bytes
+        [
+          0xFF, 0x03,
+          name.length,
+          *name.bytes
+        ]
+      end
+    end
+
     TimeSignature = Struct.new(:numerator, :denominator_power_of_two, :clocks_per_metronome_click, :number_of_32th_nodes_per_24_clocks) do
       def bytes
         [
@@ -33,6 +43,14 @@ module Sidtool
           0xFF, 0x59, 0x02,
           sharps_or_flats,
           is_major ? 0 : 1
+        ]
+      end
+    end
+
+    EndOfTrack = Struct.new(:nothing) do
+      def bytes
+        [
+          0xFF, 0x2F, 0x00
         ]
       end
     end
@@ -77,34 +95,42 @@ module Sidtool
     end
 
     def write_to(path)
-      track = build_track
+      tracks = @synths.map { |synths_for_voice| build_track(synths_for_voice) }
 
       File.open(path, 'wb') do |file|
         write_header(file)
-        write_track(file, track)
+        tracks.each_with_index { |track, index| write_track(file, track, "Voice #{index + 1}") }
       end
     end
 
-    def build_track
+    def build_track(synths)
       waveforms = [:tri, :saw, :pulse, :noise]
-      frames_and_events = []
-
-      @synths.each_with_index do |synths_for_voice, voice_number|
-        synths_for_voice.each do |synth|
-          channel = voice_number * 4 + (waveforms.index(synth.waveform) || raise("Unknown waveform #{synth.waveform}"))
-          frames_and_events << [synth.start_frame, NoteOn[channel, synth.tone]]
-          duration = [1, (FRAMES_PER_SECOND * (synth.attack + synth.decay + synth.sustain_length)).to_i].max
-          frames_and_events << [synth.start_frame + duration, NoteOff[channel, synth.tone]]
-        end
-      end
 
       track = []
       current_frame = 0
-      frames_and_events.sort_by(&:first).each do |frame, event|
-        track << DeltaTime[frame - current_frame]
-        track << event
-        current_frame = frame
+      synths.each do |synth|
+        channel = waveforms.index(synth.waveform) || raise("Unknown waveform #{synth.waveform}")
+        track << DeltaTime[synth.start_frame - current_frame]
+        track << NoteOn[channel, synth.tone]
+        current_frame = synth.start_frame
+
+        current_tone = synth.tone
+        synth.controls.each do |start_frame, tone|
+          track << DeltaTime[start_frame - current_frame]
+          track << NoteOff[channel, current_tone]
+          track << DeltaTime[0]
+          track << NoteOn[channel, tone]
+          current_tone = tone
+          current_frame = start_frame
+        end
+
+        end_frame = [current_frame, synth.start_frame + (FRAMES_PER_SECOND * (synth.attack + synth.decay + synth.sustain_length)).to_i].max
+        track << DeltaTime[end_frame - current_frame]
+        track << NoteOff[channel, current_tone]
+
+        current_frame = end_frame
       end
+
       track
     end
 
@@ -128,26 +154,21 @@ module Sidtool
       write_uint16(file, 25)
     end
 
-    def write_track(file, track)
+    def write_track(file, track, name)
       track_with_metadata = [
+        DeltaTime[0], TrackName[name],
         DeltaTime[0], TimeSignature[4, 2, 24, 8],
         DeltaTime[0], KeySignature[0, 0],
-        # Voice 1
-        DeltaTime[0], ProgramChange[0, 1],
-        DeltaTime[0], ProgramChange[1, 2],
-        DeltaTime[0], ProgramChange[2, 3],
-        DeltaTime[0], ProgramChange[3, 4],
-        # Voice 2
-        DeltaTime[0], ProgramChange[4, 1],
-        DeltaTime[0], ProgramChange[5, 2],
-        DeltaTime[0], ProgramChange[6, 3],
-        DeltaTime[0], ProgramChange[7, 4],
-        # Voice 3
-        DeltaTime[0], ProgramChange[8, 1],
-        DeltaTime[0], ProgramChange[9, 2],
-        DeltaTime[0], ProgramChange[10, 3],
-        DeltaTime[0], ProgramChange[11, 4]
-      ] + track
+
+        DeltaTime[0], ProgramChange[0, 1],  # Triangular - maps to piano
+        DeltaTime[0], ProgramChange[1, 25], # Saw - maps to guitar
+        DeltaTime[0], ProgramChange[2, 33], # Pulse - maps to bass
+        DeltaTime[0], ProgramChange[3, 41]  # Noise -  maps to strings
+      ] +
+      track +
+      [
+        DeltaTime[0], EndOfTrack[]
+      ]
       track_bytes = track_with_metadata.flat_map(&:bytes)
 
       # Type
@@ -156,11 +177,7 @@ module Sidtool
       # Length
       write_uint32(file, track_bytes.length)
 
-      # Track
       file << track_bytes.pack('c' * track_bytes.length)
-
-      # "End of track"
-      file << [0xFF, 0x2F, 0x00].pack('ccc')
     end
 
     def write_uint32(file, value)
