@@ -1,12 +1,9 @@
 # Sidtool
 
-Convert Commodore 64 SID music in the form of `.sid` files into other formats! This is still VERY
-much work in progress... the code is ugly and will probably create horrible results for you :-)
+Convert Commodore 64 SID music in the form of `.sid` files into other formats!
 
-Basically, it's a massive hack made for fun and no profit.
-
-The vision, though, is to extract the actual information from `.sid` files, which are files storing
-music for the Commodore 64. This sounds like an easy task.
+Basically, it's a massive hack made for fun and no profit. The vision, though, is to extract the
+actual information from `.sid` files, which are files storing music for the Commodore 64.
 
 `.sid` files contain actual Commodore 64 machine code that writes to registers corresponding to the
 Commodore 64 sound chip, the SID (Sound Interface Device). Which means that in order to play back a
@@ -25,7 +22,7 @@ Commodore 64 song played back by a piano? Definitely do that!
 
 You can get a simple Ruby file which defines a list of synths to play at certain points in time.
 This can be used to play back the music in [Sonic Pi](https://sonic-pi.net) (see below), or you
-can write your own little Ruby script to do your own post-processing.
+can write a Ruby script to do your own post-processing.
 
 ### Midi
 
