@@ -2,7 +2,6 @@ module Sidtool
   class Sid
     def initialize
       @voices = [Voice.new, Voice.new, Voice.new]
-      @synths = []
 
       @frequency_low = @frequency_high = 0
       @pulse_low = @pulse_high = 0
@@ -43,6 +42,10 @@ module Sidtool
 
     def stop!
       @voices.each(&:stop!)
+    end
+
+    def synths_for_voices
+      @voices.map(&:synths)
     end
   end
 end

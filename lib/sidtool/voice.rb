@@ -7,41 +7,43 @@ module Sidtool
     attr_writer :control_register
     attr_writer :attack_decay
     attr_writer :sustain_release
+    attr_reader :synths
 
     def initialize
       @frequency_low = @frequency_high = 0
       @pulse_low = @pulse_high = 0
       @attack_decay = @sustain_release = 0
       @control_register = 0
-      @synth = nil
+      @current_synth = nil
+      @synths = []
     end
 
     def finish_frame
       if gate
-        if @synth&.released?
-          @synth.stop!
-          @synth = nil
+        if @current_synth&.released?
+          @current_synth.stop!
+          @current_synth = nil
         end
 
         if frequency > 0
-          if !@synth
-            @synth = Synth.new(STATE.current_frame)
-            STATE.synths << @synth
+          if !@current_synth
+            @current_synth = Synth.new(STATE.current_frame)
+            @synths << @current_synth
           end
-          @synth.frequency = frequency
-          @synth.waveform = waveform
-          @synth.attack = attack
-          @synth.decay = decay
-          @synth.release = release
+          @current_synth.frequency = frequency
+          @current_synth.waveform = waveform
+          @current_synth.attack = attack
+          @current_synth.decay = decay
+          @current_synth.release = release
         end
       else
-        @synth&.release!
+        @current_synth&.release!
       end
     end
 
     def stop!
-      @synth&.stop!
-      @synth = nil
+      @current_synth&.stop!
+      @current_synth = nil
     end
 
     private
