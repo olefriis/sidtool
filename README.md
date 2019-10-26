@@ -71,7 +71,7 @@ The Ruby output can then be used to play back the music, for example in Sonic Pi
 ```ruby
 load '<path to your output file from before>'
 
-previous_frame = 1
+previous_frame = 0
 ::SYNTHS.each do |synth|
   current_frame = synth[0]
   frames_to_sleep = current_frame - previous_frame
