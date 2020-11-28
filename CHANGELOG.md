@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.4
+* Bumped to mos6510 version 0.1.1 which depends on a version of mini_racer that can compile
+  and install on my machine.
+
 ## 0.0.3
 * Add midi support.
 
