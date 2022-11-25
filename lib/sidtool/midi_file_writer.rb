@@ -160,10 +160,11 @@ module Sidtool
         DeltaTime[0], TimeSignature[4, 2, 24, 8],
         DeltaTime[0], KeySignature[0, 0],
 
-        DeltaTime[0], ProgramChange[0, 1],  # Triangular - maps to piano
-        DeltaTime[0], ProgramChange[1, 25], # Saw - maps to guitar
-        DeltaTime[0], ProgramChange[2, 33], # Pulse - maps to bass
-        DeltaTime[0], ProgramChange[3, 41]  # Noise -  maps to strings
+        # Map all 4 waveforms to piano
+        DeltaTime[0], ProgramChange[0, 1],
+        DeltaTime[0], ProgramChange[1, 1],
+        DeltaTime[0], ProgramChange[2, 1],
+        DeltaTime[0], ProgramChange[3, 1]
       ] +
       track +
       [
