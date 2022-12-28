@@ -1,6 +1,6 @@
-require 'th8/cpu/opcode'
+require_relative 'cpu/opcode'
 
-module TH8
+module Mos6502::TH8
   class CPU
     def initialize(bus)
       @bus = bus
@@ -24,6 +24,19 @@ module TH8
       @opcodes = self.class.instance_variable_get(:@__OPCODES).map { |op| op.bind_instance(self) }
 
       @cycles_remaining = 0
+    end
+
+    def a=(a)
+      @a = a
+    end
+
+    def pc=(pc)
+      @pc = pc
+    end
+
+    def push_stack(value)
+      @bus.write(0x100 + @s, value)
+	    @s -= 1
     end
 
     def negative_flag
@@ -101,11 +114,11 @@ module TH8
 
       self.define_method(op, &fn)
 
-      new_op = ::TH8::CPU::Opcode.new(mnemonic, cycles, byte_args, self.instance_method(op))
+      new_op = Mos6502::TH8::CPU::Opcode.new(mnemonic, cycles, byte_args, self.instance_method(op))
       self.instance_variable_get(:@__OPCODES)[opcode] = new_op
     end
 
-    nop = ::TH8::CPU::Opcode.new('NOP', 1, 0, nil)
+    nop = Mos6502::TH8::CPU::Opcode.new('NOP', 1, 0, nil)
     self.instance_variable_set(:@__OPCODES, [nop] * 0x100)
 
     definst('NOP', 0x01, 1, 0) do

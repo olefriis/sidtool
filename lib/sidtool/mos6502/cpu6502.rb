@@ -1,6 +1,6 @@
-require 'cpudsl'
+require_relative 'cpudsl'
 
-MOS6502 = CPUDSL.newcpu('MOS 6502', 8)
+MOS6502 = Mos6502::CPUDSL.newcpu('MOS 6502', 8)
 
 MOS6502.defregister('X')
 MOS6502.defregister('Y')

@@ -1,3 +1,8 @@
+# Please note!
+
+This is a purely experimental branch integrating the MOS 6502 emulator from
+https://github.com/wuest/livestream-6502-emu into `sidtool`.
+
 # Sidtool
 
 Convert Commodore 64 SID music in the form of `.sid` files into other formats!

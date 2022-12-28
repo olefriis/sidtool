@@ -1,4 +1,4 @@
-module CPUDSL
+module Mos6502::CPUDSL
   def self.newcpu(name, bits)
     Class.new do
       self.instance_variable_set(:@__name, name)

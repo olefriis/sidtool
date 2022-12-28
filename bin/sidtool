@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 require 'sidtool'
-require 'mos6510'
 require 'optparse'
 
 DEFAULT_FRAMES_TO_PROCESS = 15000
@@ -55,28 +54,57 @@ if show_info
   puts "Songs: #{sid_file.songs} (start song: #{sid_file.start_song})"
 end
 
+def jsr(cpu, address, accumulator_value=0)
+  cpu.set_register_A(accumulator_value)
+  cpu.set_register_Y(0)
+  #cpu.set_register_P(0) What is register P?
+  cpu.set_register_S(255)
+  cpu.set_register_PC(address)
+  cpu.stack_S_push(0)
+  cpu.stack_S_push(0)
+  while (cpu.register_PC > 1)
+  	cpu.clock
+   end
+end
+
 if output_file
+  bus = Mos6502::TH8::Bus.new
+  cpu = ::MOS6502.new(bus)
+
+  # Map the SID to the address space
+  sid_mapping = bus.attach('SID', 0xD400, 0xD7FF)
+  sid = Sidtool::Sid.new
+  sid_mapping.set_read  { |offset| 0 }
+  sid_mapping.set_write { |offset, byte| sid.poke(offset, byte) }
+
+  # Map some RAM to the rest of the address space
+  ram = bus.attach('RAM', 0x0000, 0xFFFF)
+  ram.alloc(0x10000)
+  ram.set_read  { |offset| @mem[offset] }
+  ram.set_write { |offset, byte| @mem[offset] = (byte & 0xff) }
+
   load_address = sid_file.data[0] + (sid_file.data[1] << 8)
 
-  sid = Sidtool::Sid.new
-  cpu = Mos6510::Cpu.new(sid: sid)
-
-  cpu.load(sid_file.data[2..-1], from: load_address)
-  cpu.start
+  sid_file.data[2..-1].each_with_index do |byte, index|
+    ram.write(load_address + index, byte)
+  end
 
   play_address = sid_file.play_address
   if play_address == 0
-    cpu.jsr sid_file.init_address
-    play_address = (cpu.peek(0x0315) << 8) + cpu.peek(0x0314)
+    jsr(cpu, sid_file.init_address)
+    play_address = (ram.read(0x0315) << 8) + ram.read(0x0314)
     STDERR.puts "New play address #{play_address}"
   end
 
-  cpu.jsr sid_file.init_address, song - 1
+  jsr(cpu, sid_file.init_address, song - 1)
 
   frames.times do
-    cpu.jsr play_address
+    jsr(cpu, play_address)
     sid.finish_frame
     Sidtool::STATE.current_frame += 1
+    if Sidtool::STATE.current_frame % 1000 == 0
+      puts "Frame #{Sidtool::STATE.current_frame}"
+    end
   end
 
   sid.stop!

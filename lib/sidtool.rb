@@ -1,4 +1,7 @@
 require 'sidtool/version'
+require_relative 'sidtool/mos6502/th8.rb' # For Bus
+require_relative 'sidtool/mos6502/cpudsl'
+require_relative 'sidtool/mos6502/cpu6502'
 
 module Sidtool
   require 'sidtool/file_reader'
